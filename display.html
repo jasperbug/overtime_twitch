@@ -15,11 +15,50 @@
 
     <script src="js/storage.js"></script>
     <script>
-        // OBS顯示頁面的簡化版本
+        // OBS顯示頁面 - 服務器同步版本
         let timerInterval;
+        let useServerAPI = false;
         
-        function updateDisplay() {
-            const timerData = Storage.getTimerData();
+        // 檢查是否可以使用服務器API
+        async function checkServerAPI() {
+            try {
+                const response = await fetch('/api/timer');
+                if (response.ok) {
+                    useServerAPI = true;
+                    console.log('✅ 使用服務器API模式（解決OBS同步問題）');
+                } else {
+                    console.log('📂 使用localStorage模式');
+                }
+            } catch (error) {
+                console.log('📂 使用localStorage模式');
+            }
+        }
+        
+        // 從服務器獲取計時器數據
+        async function getTimerDataFromServer() {
+            try {
+                const response = await fetch('/api/timer');
+                if (response.ok) {
+                    const data = await response.json();
+                    return {
+                        remainingTime: data.actualRemainingTime,
+                        isRunning: data.isRunning,
+                        startTime: data.startTime,
+                        initialTime: data.initialTime
+                    };
+                }
+            } catch (error) {
+                console.log('⚠️ 服務器請求失敗，回退到localStorage');
+            }
+            
+            // 回退到localStorage
+            return Storage.getTimerData();
+        }
+        
+        async function updateDisplay() {
+            const timerData = useServerAPI ? 
+                await getTimerDataFromServer() : 
+                Storage.getTimerData();
             const countdownEl = document.getElementById('countdown');
             const statusEl = document.getElementById('status');
             const debugEl = document.getElementById('debug');
@@ -82,9 +121,17 @@
             }
         });
         
-        // 每秒更新一次
-        setInterval(updateDisplay, 1000);
-        updateDisplay();
+        // 初始化
+        async function init() {
+            await checkServerAPI();
+            await updateDisplay();
+            
+            // 每秒更新一次
+            setInterval(updateDisplay, 1000);
+        }
+        
+        // 啟動
+        init();
     </script>
 </body>
 </html>

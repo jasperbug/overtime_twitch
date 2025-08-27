@@ -4,7 +4,17 @@ const path = require('path');
 const app = express();
 const PORT = 6969;
 
-// 設置靜態文件目錄
+// 全局狀態存儲（解決OBS Browser Source localStorage問題）
+let globalTimerState = {
+    remainingTime: 0,
+    isRunning: false,
+    startTime: 0,
+    initialTime: 0,
+    lastUpdate: Date.now()
+};
+
+// 中間件
+app.use(express.json());
 app.use(express.static(path.join(__dirname)));
 
 // 根路徑重定向到index.html
@@ -20,6 +30,57 @@ app.get('/display', (req, res) => {
 // Debug工具路由
 app.get('/debug', (req, res) => {
     res.sendFile(path.join(__dirname, 'debug.html'));
+});
+
+// API路由：獲取計時器狀態
+app.get('/api/timer', (req, res) => {
+    // 如果計時器正在運行，計算實際剩餘時間
+    if (globalTimerState.isRunning && globalTimerState.remainingTime > 0) {
+        const currentTime = Date.now();
+        const elapsed = Math.floor((currentTime - globalTimerState.startTime) / 1000);
+        const actualRemaining = Math.max(0, globalTimerState.remainingTime - elapsed);
+        
+        res.json({
+            ...globalTimerState,
+            actualRemainingTime: actualRemaining,
+            serverTime: currentTime
+        });
+    } else {
+        res.json({
+            ...globalTimerState,
+            actualRemainingTime: globalTimerState.remainingTime,
+            serverTime: Date.now()
+        });
+    }
+});
+
+// API路由：更新計時器狀態
+app.post('/api/timer', (req, res) => {
+    const newState = req.body;
+    
+    // 更新全局狀態
+    globalTimerState = {
+        ...globalTimerState,
+        ...newState,
+        lastUpdate: Date.now()
+    };
+    
+    console.log('⏱️ 計時器狀態已更新:', globalTimerState);
+    res.json({ success: true, state: globalTimerState });
+});
+
+// API路由：重置計時器狀態
+app.post('/api/timer/reset', (req, res) => {
+    globalTimerState = {
+        remainingTime: 0,
+        isRunning: false,
+        startTime: 0,
+        initialTime: 0,
+        lastUpdate: Date.now()
+    };
+    
+    console.log('🔄 計時器狀態已重置');
+    res.json({ success: true, state: globalTimerState });
 });
 
 // 404 錯誤處理

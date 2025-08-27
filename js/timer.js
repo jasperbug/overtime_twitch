@@ -63,6 +63,27 @@ class TwitchOvertimeTimer {
 
     saveTimerData() {
         Storage.saveTimerData(this.timerData);
+        // 同步到服務器（解決OBS Browser Source問題）
+        this.syncToServer();
+    }
+
+    // 同步狀態到服務器
+    async syncToServer() {
+        try {
+            const response = await fetch('/api/timer', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(this.timerData)
+            });
+            
+            if (response.ok) {
+                console.log('✅ 狀態已同步到服務器');
+            }
+        } catch (error) {
+            console.log('⚠️ 服務器同步失敗，使用本地存儲:', error.message);
+        }
     }
 
     bindEvents() {
