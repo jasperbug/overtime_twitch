@@ -189,6 +189,13 @@ twitch-overtime-timer/
 
 ## 常見問題
 
+### Q: OBS顯示00:00:00但瀏覽器正常？
+A: **已修復！**這是OBS Browser Source localStorage隔離問題，新版本使用服務器同步：
+1. 確保運行 `npm start` 
+2. URL使用：`http://127.0.0.1:6969/display`
+3. 刷新OBS Browser Source
+4. 查看完整解決方案：`obs-troubleshooting.md`
+
 ### Q: 為什麼時間一直顯示 0:00:00？
 A: 請確保：
 1. 服務器正在運行（`npm start`）
@@ -245,6 +252,13 @@ A: 支援，介面採用響應式設計，可在手機上正常使用。
 - **兼容性**: 現代瀏覽器 (ES6+)
 
 ## 更新紀錄
+
+### v3.1.0 (OBS同步問題修復版本)
+- 🔧 **修復OBS Browser Source同步問題**：徹底解決顯示00:00:00的問題
+- 🌐 **服務器端狀態同步**：新增 `/api/timer` API端點
+- 🔄 **智能回退機制**：服務器優先，localStorage備用
+- 📋 **OBS故障排除指南**：完整的troubleshooting文檔
+- ✅ **自動同步**：控制面板與OBS實時同步狀態
 
 ### v3.0.0 (npm技術棧版本)
 - 🚀 **改為npm技術棧**，使用Express.js服務器
