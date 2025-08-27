@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Twitch 加班台倒數計時工具 - 控制面板</title>
+    <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Twitch 加班台倒數計時工具</h1>
+        
+        <div class="panel">
+            <h2>時間設定</h2>
+            <div class="time-setting">
+                <label for="hours">小時:</label>
+                <input type="number" id="hours" min="0" max="23" value="0">
+                <label for="minutes">分鐘:</label>
+                <input type="number" id="minutes" min="0" max="59" value="0">
+                <button id="setTime">設定時間</button>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2>當前狀態</h2>
+            <div class="current-time">
+                <span id="timeDisplay">00:00:00</span>
+            </div>
+            <div class="controls">
+                <button id="startPause">開始</button>
+                <button id="reset">重置</button>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2>積分管理</h2>
+            <div class="points-section">
+                <input type="number" id="pointsInput" min="1" placeholder="輸入積分數量">
+                <button id="addPoints">增加時間</button>
+            </div>
+            <div class="quick-buttons">
+                <button class="quick-btn" data-minutes="1">+1分鐘</button>
+                <button class="quick-btn" data-minutes="5">+5分鐘</button>
+                <button class="quick-btn" data-minutes="10">+10分鐘</button>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2>今日統計</h2>
+            <div class="stats">
+                <p>總積分: <span id="totalPoints">0</span></p>
+                <p>總時長: <span id="totalTime">00:00:00</span></p>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2>Twitch 聊天室整合</h2>
+            <div class="twitch-simple">
+                <div class="connection-section">
+                    <div class="form-group">
+                        <label for="channelName">頻道名稱:</label>
+                        <input type="text" id="channelName" placeholder="請輸入 Twitch 頻道名稱 (例：shroud)">
+                    </div>
+                    <div class="connection-buttons">
+                        <button id="connectChat">連接聊天室</button>
+                        <button id="disconnectChat" style="display: none;">斷開連接</button>
+                    </div>
+                    <div id="chatStatus" class="status-indicator disconnected">未連接</div>
+                </div>
+                
+                <div class="subscription-info">
+                    <h3>自動積分規則設定</h3>
+                    <div class="tier-settings">
+                        <div class="tier-setting">
+                            <label for="tier1Minutes">Tier 1 訂閱:</label>
+                            <div class="input-with-unit">
+                                <input type="number" id="tier1Minutes" min="1" max="60" value="1">
+                                <span class="unit">分鐘</span>
+                            </div>
+                        </div>
+                        <div class="tier-setting">
+                            <label for="tier2Minutes">Tier 2 訂閱:</label>
+                            <div class="input-with-unit">
+                                <input type="number" id="tier2Minutes" min="1" max="60" value="3">
+                                <span class="unit">分鐘</span>
+                            </div>
+                        </div>
+                        <div class="tier-setting">
+                            <label for="tier3Minutes">Tier 3 訂閱:</label>
+                            <div class="input-with-unit">
+                                <input type="number" id="tier3Minutes" min="1" max="60" value="5">
+                                <span class="unit">分鐘</span>
+                            </div>
+                        </div>
+                        <div class="gift-info">
+                            <span class="tier-label">禮物訂閱:</span>
+                            <span class="tier-note">按上述設定 × 數量計算</span>
+                        </div>
+                    </div>
+                    <div class="settings-buttons">
+                        <button id="saveTierSettings">儲存設定</button>
+                        <button id="resetTierSettings">重置為預設</button>
+                    </div>
+                    <div class="security-note">
+                        <p>🛡️ 只監聽系統訊息，自動排除假冒訂閱</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2>OBS 顯示</h2>
+            <p>請使用以下連結作為 OBS Browser Source:</p>
+            <div class="obs-url">
+                <input type="text" id="obsUrl" readonly>
+                <button id="copyUrl">複製連結</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/storage.js"></script>
+    <script src="js/audio.js"></script>
+    <script src="js/twitch-chat.js"></script>
+    <script src="js/timer.js"></script>
+</body>
+</html>

@@ -1,0 +1,91 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: transparent;
+    font-family: 'Courier New', monospace;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.timer-display {
+    text-align: center;
+}
+
+#countdown {
+    font-size: 8vw;
+    font-weight: bold;
+    color: #00ff88;
+    text-shadow: 
+        0 0 20px rgba(0, 255, 136, 0.8),
+        0 0 40px rgba(0, 255, 136, 0.6),
+        0 0 60px rgba(0, 255, 136, 0.4);
+    transition: all 0.3s ease;
+    min-height: 1.2em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#countdown.warning {
+    color: #ff4444;
+    text-shadow: 
+        0 0 20px rgba(255, 68, 68, 0.8),
+        0 0 40px rgba(255, 68, 68, 0.6),
+        0 0 60px rgba(255, 68, 68, 0.4);
+    animation: pulse 1s infinite;
+}
+
+#countdown.finished {
+    color: #ffaa00;
+    text-shadow: 
+        0 0 20px rgba(255, 170, 0, 0.8),
+        0 0 40px rgba(255, 170, 0, 0.6),
+        0 0 60px rgba(255, 170, 0, 0.4);
+}
+
+#status {
+    font-size: 2vw;
+    color: #ffffff;
+    margin-top: 20px;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.05);
+        opacity: 0.8;
+    }
+}
+
+/* 確保在小螢幕上也能正常顯示 */
+@media (max-width: 800px) {
+    #countdown {
+        font-size: 12vw;
+    }
+    
+    #status {
+        font-size: 4vw;
+    }
+}
+
+/* 垂直螢幕優化 */
+@media (orientation: portrait) {
+    #countdown {
+        font-size: 15vw;
+    }
+    
+    #status {
+        font-size: 5vw;
+    }
+}

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug 工具</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #1a1a1a;
+            color: #fff;
+            padding: 20px;
+        }
+        .panel {
+            background: #2a2a2a;
+            padding: 20px;
+            margin: 10px 0;
+            border-radius: 8px;
+        }
+        button {
+            background: #00ff88;
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #00dd77;
+        }
+        .danger {
+            background: #ff4444;
+            color: #fff;
+        }
+        .danger:hover {
+            background: #dd3333;
+        }
+        pre {
+            background: #333;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Debug 工具</h1>
+    
+    <div class="panel">
+        <h2>LocalStorage 數據檢查</h2>
+        <button onclick="showData()">顯示所有數據</button>
+        <button class="danger" onclick="clearData()">清除所有數據</button>
+        <pre id="dataDisplay">點擊"顯示所有數據"查看當前的localStorage內容</pre>
+    </div>
+
+    <div class="panel">
+        <h2>手動設定測試數據</h2>
+        <button onclick="setTestTimer()">設定5分鐘測試計時器</button>
+        <button onclick="startTestTimer()">開始測試計時器</button>
+        <button onclick="stopTestTimer()">停止測試計時器</button>
+    </div>
+
+    <div class="panel">
+        <h2>快速導航</h2>
+        <a href="index.html" style="color: #00ff88;">回到控制面板</a> |
+        <a href="display.html" style="color: #00ff88;">查看顯示頁面</a>
+    </div>
+
+    <script src="js/storage.js"></script>
+    <script>
+        function showData() {
+            const display = document.getElementById('dataDisplay');
+            const allData = {
+                timerData: Storage.getTimerData(),
+                dailyStats: Storage.getDailyStats(),
+                settings: Storage.getSettings()
+            };
+            display.textContent = JSON.stringify(allData, null, 2);
+        }
+
+        function clearData() {
+            if (confirm('確定要清除所有localStorage數據嗎？這將重置計時器和統計數據。')) {
+                Storage.clearAll();
+                alert('所有數據已清除！');
+                showData();
+            }
+        }
+
+        function setTestTimer() {
+            const timerData = {
+                remainingTime: 300, // 5分鐘
+                isRunning: false,
+                startTime: 0,
+                initialTime: 300
+            };
+            Storage.saveTimerData(timerData);
+            alert('已設定5分鐘測試計時器！');
+            showData();
+        }
+
+        function startTestTimer() {
+            const timerData = Storage.getTimerData();
+            if (timerData.remainingTime > 0) {
+                timerData.isRunning = true;
+                timerData.startTime = Date.now();
+                Storage.saveTimerData(timerData);
+                alert('測試計時器已開始！');
+                showData();
+            } else {
+                alert('請先設定測試計時器！');
+            }
+        }
+
+        function stopTestTimer() {
+            const timerData = Storage.getTimerData();
+            if (timerData.isRunning) {
+                const currentTime = Date.now();
+                const elapsed = Math.floor((currentTime - timerData.startTime) / 1000);
+                timerData.remainingTime = Math.max(0, timerData.remainingTime - elapsed);
+                timerData.isRunning = false;
+                timerData.startTime = 0;
+                Storage.saveTimerData(timerData);
+                alert('測試計時器已停止！');
+                showData();
+            } else {
+                alert('計時器沒有在運行！');
+            }
+        }
+
+        // 頁面載入時顯示數據
+        window.onload = showData;
+    </script>
+</body>
+</html>
