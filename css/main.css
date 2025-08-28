@@ -151,6 +151,28 @@ button {
     background-color: #666;
 }
 
+.quick-btn.add-btn {
+    background-color: #00ff88;
+    color: #000;
+}
+
+.quick-btn.add-btn:hover {
+    background-color: #00dd77;
+}
+
+.quick-btn.reduce-btn {
+    background-color: #ff4444;
+    color: #fff;
+}
+
+.quick-btn.reduce-btn:hover {
+    background-color: #dd3333;
+}
+
+.reduce-buttons {
+    margin-top: 10px;
+}
+
 /* 統計面板 */
 .stats p {
     margin-bottom: 10px;
@@ -450,6 +472,103 @@ button {
         transform: translateX(0);
         opacity: 1;
     }
+}
+
+/* 抖內功能樣式 */
+.donation-section {
+    background-color: #1a1a1a;
+    border-radius: 8px;
+    padding: 20px;
+    border: 1px solid #555;
+}
+
+.donation-info p {
+    color: #ffa500;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+.donation-settings h3 {
+    color: #ffa500;
+    margin-bottom: 15px;
+    font-size: 1.2em;
+}
+
+.donation-rules {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.donation-rule {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.donation-rule label {
+    min-width: 140px;
+    font-weight: bold;
+    color: #fff;
+}
+
+.manual-donation {
+    border-top: 1px solid #555;
+    padding-top: 20px;
+    margin-top: 20px;
+}
+
+.manual-donation h3 {
+    color: #ffa500;
+    margin-bottom: 15px;
+}
+
+.manual-donation-input {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.manual-donation-input input {
+    flex: 1;
+    min-width: 150px;
+    padding: 10px;
+    border: 1px solid #555;
+    border-radius: 4px;
+    background-color: #2a2a2a;
+    color: #ffffff;
+}
+
+.donation-examples {
+    color: #ccc;
+    font-size: 0.9em;
+}
+
+#addDonation {
+    background-color: #ffa500;
+    color: #000;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+#addDonation:hover {
+    background-color: #e89400;
+}
+
+#saveDonationSettings, #resetDonationSettings {
+    background-color: #ffa500;
+    color: #000;
+}
+
+#saveDonationSettings:hover, #resetDonationSettings:hover {
+    background-color: #e89400;
 }
 
 /* 響應式設計 */

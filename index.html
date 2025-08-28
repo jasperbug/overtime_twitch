@@ -39,9 +39,14 @@
                 <button id="addPoints">增加時間</button>
             </div>
             <div class="quick-buttons">
-                <button class="quick-btn" data-minutes="1">+1分鐘</button>
-                <button class="quick-btn" data-minutes="5">+5分鐘</button>
-                <button class="quick-btn" data-minutes="10">+10分鐘</button>
+                <button class="quick-btn add-btn" data-minutes="1">+1分鐘</button>
+                <button class="quick-btn add-btn" data-minutes="5">+5分鐘</button>
+                <button class="quick-btn add-btn" data-minutes="10">+10分鐘</button>
+            </div>
+            <div class="quick-buttons reduce-buttons">
+                <button class="quick-btn reduce-btn" data-minutes="-1">-1分鐘</button>
+                <button class="quick-btn reduce-btn" data-minutes="-5">-5分鐘</button>
+                <button class="quick-btn reduce-btn" data-minutes="-10">-10分鐘</button>
             </div>
         </div>
 
@@ -103,6 +108,55 @@
                     </div>
                     <div class="security-note">
                         <p>🛡️ 只監聽系統訊息，自動排除假冒訂閱</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h2>Twitch Bits 小奇點加班</h2>
+            <div class="donation-section">
+                <div class="donation-info">
+                    <p>🎁 支持 Bits 小奇點加班功能！觀眾可以透過以下方式增加時間：</p>
+                </div>
+                <div class="donation-settings">
+                    <h3>Bits 積分規則設定</h3>
+                    <div class="donation-rules">
+                        <div class="donation-rule">
+                            <label for="donationRate">每 Bits 兌換:</label>
+                            <div class="input-with-unit">
+                                <input type="number" id="donationRate" min="0.01" max="10" step="0.01" value="0.1">
+                                <span class="unit">分鐘</span>
+                            </div>
+                        </div>
+                        <div class="donation-rule">
+                            <label for="minDonation">最小 Bits 數量:</label>
+                            <div class="input-with-unit">
+                                <input type="number" id="minDonation" min="1" max="10000" value="100">
+                                <span class="unit">Bits</span>
+                            </div>
+                        </div>
+                        <div class="donation-rule">
+                            <label for="maxDonation">單次最大時間:</label>
+                            <div class="input-with-unit">
+                                <input type="number" id="maxDonation" min="1" max="180" value="30">
+                                <span class="unit">分鐘</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="settings-buttons">
+                        <button id="saveDonationSettings">儲存 Bits 設定</button>
+                        <button id="resetDonationSettings">重置為預設</button>
+                    </div>
+                </div>
+                <div class="manual-donation">
+                    <h3>手動新增 Bits</h3>
+                    <div class="manual-donation-input">
+                        <input type="number" id="donationAmount" min="1" placeholder="輸入 Bits 數量">
+                        <button id="addDonation">新增 Bits 時間</button>
+                    </div>
+                    <div class="donation-examples">
+                        <p>💡 範例：100 Bits = 10分鐘，500 Bits = 50分鐘</p>
                     </div>
                 </div>
             </div>

@@ -15,6 +15,14 @@ class TwitchChatListener {
         };
         
         this.subscriptionPoints = { ...this.defaultSubscriptionPoints };
+        
+        // 預設 Bits 設定
+        this.defaultBitsSettings = {
+            rate: 0.1,      // 每 Bits = 0.1分鐘
+            minAmount: 100, // 最小100 Bits
+            maxTime: 30     // 最大30分鐘
+        };
+        
         this.loadSettings();
     }
 
@@ -158,6 +166,9 @@ class TwitchChatListener {
         const message = this.parseIRCMessage(rawMessage);
         if (message && message.command === 'USERNOTICE') {
             this.handleUserNotice(message);
+        } else if (message && message.command === 'PRIVMSG') {
+            // 檢查是否為 Bits 訊息
+            this.handleBitsMessage(message);
         }
     }
 
@@ -229,6 +240,71 @@ class TwitchChatListener {
         } else if (msgId === 'submysterygift') {
             // 神秘禮物訂閱
             this.handleMysteryGiftSubscription(tags);
+        }
+    }
+
+    // 處理 Bits 訊息
+    handleBitsMessage(message) {
+        const tags = message.tags;
+        const bits = parseInt(tags.bits);
+        
+        // 只處理有 Bits 的訊息
+        if (!bits || bits <= 0) {
+            return;
+        }
+        
+        console.log(`🎁 收到 Bits! 數量: ${bits}`);
+        
+        // 獲取 Bits 設定
+        const bitsSettings = this.getBitsSettings();
+        
+        // 檢查最小數量
+        if (bits < bitsSettings.minAmount) {
+            console.log(`⚠️ Bits 數量 ${bits} 小於最小值 ${bitsSettings.minAmount}，跳過處理`);
+            return;
+        }
+        
+        // 計算時間（分鐘）
+        let minutes = Math.floor(bits * bitsSettings.rate);
+        
+        // 檢查最大時間限制
+        if (minutes > bitsSettings.maxTime) {
+            minutes = bitsSettings.maxTime;
+            console.log(`⚠️ 計算時間 ${Math.floor(bits * bitsSettings.rate)} 分鐘超過上限，限制為 ${minutes} 分鐘`);
+        }
+        
+        // 添加時間到計時器
+        this.addBitsToTimer(minutes, bits, tags['display-name'] || '匿名');
+    }
+
+    // 獲取 Bits 設定
+    getBitsSettings() {
+        try {
+            const stored = localStorage.getItem('twitchTimer_donationSettings');
+            return stored ? 
+                { ...this.defaultBitsSettings, ...JSON.parse(stored) } : 
+                this.defaultBitsSettings;
+        } catch (error) {
+            console.error('讀取 Bits 設定失敗:', error);
+            return this.defaultBitsSettings;
+        }
+    }
+
+    // 添加 Bits 時間到計時器
+    addBitsToTimer(minutes, bits, username) {
+        if (window.overtimeTimer) {
+            const seconds = minutes * 60; // 轉換為秒
+            window.overtimeTimer.addTime(seconds, 0); // 不算積分統計，只增加時間
+            
+            // 顯示通知
+            this.showNotification(`+${minutes} 分鐘`, `${username} 贈送 ${bits} Bits`);
+            
+            // 播放音效
+            if (window.overtimeTimer.audioManager) {
+                window.overtimeTimer.audioManager.playPointsAddedSound();
+            }
+            
+            console.log(`🎁 ${username} 贈送 ${bits} Bits，增加 ${minutes} 分鐘時間`);
         }
     }
 

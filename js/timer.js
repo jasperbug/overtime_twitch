@@ -14,6 +14,7 @@ class TwitchOvertimeTimer {
         this.updateStats();
         this.setObsUrl();
         this.setupTwitchIntegration();
+        this.setupDonationSystem();
         
         // 如果計時器正在運行，恢復計時
         if (this.timerData.isRunning) {
@@ -55,6 +56,15 @@ class TwitchOvertimeTimer {
         this.tier3MinutesInput = document.getElementById('tier3Minutes');
         this.saveTierSettingsBtn = document.getElementById('saveTierSettings');
         this.resetTierSettingsBtn = document.getElementById('resetTierSettings');
+        
+        // 抖內功能元素
+        this.donationRateInput = document.getElementById('donationRate');
+        this.minDonationInput = document.getElementById('minDonation');
+        this.maxDonationInput = document.getElementById('maxDonation');
+        this.saveDonationSettingsBtn = document.getElementById('saveDonationSettings');
+        this.resetDonationSettingsBtn = document.getElementById('resetDonationSettings');
+        this.donationAmountInput = document.getElementById('donationAmount');
+        this.addDonationBtn = document.getElementById('addDonation');
     }
 
     loadTimerData() {
@@ -118,6 +128,14 @@ class TwitchOvertimeTimer {
         // 層級設定
         this.saveTierSettingsBtn.addEventListener('click', () => this.saveTierSettings());
         this.resetTierSettingsBtn.addEventListener('click', () => this.resetTierSettings());
+        
+        // 抖內功能
+        this.saveDonationSettingsBtn.addEventListener('click', () => this.saveDonationSettings());
+        this.resetDonationSettingsBtn.addEventListener('click', () => this.resetDonationSettings());
+        this.addDonationBtn.addEventListener('click', () => this.addDonation());
+        this.donationAmountInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') this.addDonation();
+        });
         
         // 啟用音效（需要用戶互動）
         document.addEventListener('click', () => {
@@ -238,7 +256,7 @@ class TwitchOvertimeTimer {
     }
 
     addTime(seconds, points = 0) {
-        if (seconds <= 0) return;
+        if (seconds === 0) return;
         
         // 如果計時器正在運行，需要計算當前實際剩餘時間
         if (this.timerData.isRunning) {
@@ -246,10 +264,10 @@ class TwitchOvertimeTimer {
             const elapsed = Math.floor((currentTime - this.timerData.startTime) / 1000);
             const currentRemaining = Math.max(0, this.timerData.remainingTime - elapsed);
             
-            this.timerData.remainingTime = currentRemaining + seconds;
+            this.timerData.remainingTime = Math.max(0, currentRemaining + seconds);
             this.timerData.startTime = currentTime;
         } else {
-            this.timerData.remainingTime += seconds;
+            this.timerData.remainingTime = Math.max(0, this.timerData.remainingTime + seconds);
         }
         
         this.isFinished = false;
@@ -260,6 +278,9 @@ class TwitchOvertimeTimer {
             Storage.addPointsToStats(points, seconds);
             this.audioManager.playPointsAddedSound();
             this.updateStats();
+        } else if (seconds > 0) {
+            // 正數但沒有積分（如抖內）
+            this.audioManager.playPointsAddedSound();
         }
         
         this.updateDisplay();
@@ -462,6 +483,135 @@ class TwitchOvertimeTimer {
 
             console.log('🔄 層級設定已重置為預設值');
         }
+    }
+
+    // 設定抖內系統
+    setupDonationSystem() {
+        this.loadDonationSettings();
+    }
+
+    // 載入抖內設定
+    loadDonationSettings() {
+        const settings = this.getDonationSettings();
+        this.donationRateInput.value = settings.rate;
+        this.minDonationInput.value = settings.minAmount;
+        this.maxDonationInput.value = settings.maxTime;
+    }
+
+    // 獲取 Bits 設定
+    getDonationSettings() {
+        const defaultSettings = {
+            rate: 0.1,      // 每 Bits = 0.1分鐘
+            minAmount: 100, // 最小100 Bits
+            maxTime: 30     // 最大30分鐘
+        };
+
+        try {
+            const stored = localStorage.getItem('twitchTimer_donationSettings');
+            return stored ? { ...defaultSettings, ...JSON.parse(stored) } : defaultSettings;
+        } catch (error) {
+            console.error('讀取 Bits 設定失敗:', error);
+            return defaultSettings;
+        }
+    }
+
+    // 儲存 Bits 設定
+    saveDonationSettings() {
+        const rate = parseFloat(this.donationRateInput.value) || 0.1;
+        const minAmount = parseInt(this.minDonationInput.value) || 100;
+        const maxTime = parseInt(this.maxDonationInput.value) || 30;
+
+        // 驗證輸入值
+        if (rate < 0.01 || rate > 10 || minAmount < 1 || minAmount > 10000 || maxTime < 1 || maxTime > 180) {
+            alert('請輸入有效的設定值');
+            return;
+        }
+
+        const settings = { rate, minAmount, maxTime };
+        
+        try {
+            localStorage.setItem('twitchTimer_donationSettings', JSON.stringify(settings));
+        } catch (error) {
+            console.error('儲存 Bits 設定失敗:', error);
+        }
+
+        // 顯示成功訊息
+        const originalText = this.saveDonationSettingsBtn.textContent;
+        this.saveDonationSettingsBtn.textContent = '已儲存！';
+        this.saveDonationSettingsBtn.style.backgroundColor = '#00ff88';
+        
+        setTimeout(() => {
+            this.saveDonationSettingsBtn.textContent = originalText;
+            this.saveDonationSettingsBtn.style.backgroundColor = '';
+        }, 2000);
+
+        console.log(`✅ Bits 設定已更新: 每 Bits ${rate}分鐘, 最小${minAmount} Bits, 最大${maxTime}分鐘`);
+    }
+
+    // 重置 Bits 設定
+    resetDonationSettings() {
+        if (confirm('確定要重置 Bits 設定為預設值嗎？\n(每 Bits 0.1分鐘, 最小100 Bits, 最大30分鐘)')) {
+            this.donationRateInput.value = 0.1;
+            this.minDonationInput.value = 100;
+            this.maxDonationInput.value = 30;
+
+            const settings = { rate: 0.1, minAmount: 100, maxTime: 30 };
+            localStorage.setItem('twitchTimer_donationSettings', JSON.stringify(settings));
+
+            // 顯示重置訊息
+            const originalText = this.resetDonationSettingsBtn.textContent;
+            this.resetDonationSettingsBtn.textContent = '已重置！';
+            this.resetDonationSettingsBtn.style.backgroundColor = '#00ff88';
+            
+            setTimeout(() => {
+                this.resetDonationSettingsBtn.textContent = originalText;
+                this.resetDonationSettingsBtn.style.backgroundColor = '';
+            }, 2000);
+
+            console.log('🔄 Bits 設定已重置為預設值');
+        }
+    }
+
+    // 新增 Bits
+    addDonation() {
+        const amount = parseInt(this.donationAmountInput.value);
+        if (!amount || amount <= 0) {
+            alert('請輸入有效的 Bits 數量');
+            return;
+        }
+
+        const settings = this.getDonationSettings();
+        
+        // 檢查最小數量
+        if (amount < settings.minAmount) {
+            alert(`最小 Bits 數量為 ${settings.minAmount} Bits`);
+            return;
+        }
+
+        // 計算時間（分鐘）
+        let minutes = Math.floor(amount * settings.rate);
+        
+        // 檢查最大時間限制
+        if (minutes > settings.maxTime) {
+            minutes = settings.maxTime;
+            alert(`單次最大增加時間為 ${settings.maxTime} 分鐘`);
+        }
+
+        // 新增時間
+        this.addTime(minutes * 60); // 轉換為秒數
+        
+        // 清除輸入框
+        this.donationAmountInput.value = '';
+
+        // 顯示成功訊息
+        const originalText = this.addDonationBtn.textContent;
+        this.addDonationBtn.textContent = `已新增${minutes}分鐘！`;
+        
+        setTimeout(() => {
+            this.addDonationBtn.textContent = originalText;
+        }, 2000);
+
+        console.log(`🎁 收到 ${amount} Bits，增加 ${minutes} 分鐘時間`);
     }
 }
 
