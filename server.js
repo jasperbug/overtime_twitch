@@ -35,23 +35,27 @@ app.get('/debug', (req, res) => {
 // API路由：獲取計時器狀態
 app.get('/api/timer', (req, res) => {
     // 如果計時器正在運行，計算實際剩餘時間
+    const currentTime = Date.now();
+    let actualRemaining;
+    
     if (globalTimerState.isRunning && globalTimerState.remainingTime > 0) {
-        const currentTime = Date.now();
-        const elapsed = Math.floor((currentTime - globalTimerState.startTime) / 1000);
-        const actualRemaining = Math.max(0, globalTimerState.remainingTime - elapsed);
-        
-        res.json({
-            ...globalTimerState,
-            actualRemainingTime: actualRemaining,
-            serverTime: currentTime
-        });
+        // 使用絕對時間計算（優先）或回退到舊邏輯
+        if (globalTimerState.absoluteEndTime) {
+            actualRemaining = Math.max(0, globalTimerState.absoluteEndTime - Math.floor(currentTime / 1000));
+        } else {
+            // 回退到舊邏輯
+            const elapsed = Math.floor((currentTime - globalTimerState.startTime) / 1000);
+            actualRemaining = Math.max(0, globalTimerState.remainingTime - elapsed);
+        }
     } else {
-        res.json({
-            ...globalTimerState,
-            actualRemainingTime: globalTimerState.remainingTime,
-            serverTime: Date.now()
-        });
+        actualRemaining = globalTimerState.remainingTime;
     }
+    
+    res.json({
+        ...globalTimerState,
+        actualRemainingTime: actualRemaining,
+        serverTime: currentTime
+    });
 });
 
 // API路由：更新計時器狀態

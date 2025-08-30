@@ -41,10 +41,12 @@
                 if (response.ok) {
                     const data = await response.json();
                     return {
-                        remainingTime: data.actualRemainingTime,
+                        remainingTime: data.actualRemainingTime, // 服務器已計算好的實際剩餘時間
                         isRunning: data.isRunning,
                         startTime: data.startTime,
-                        initialTime: data.initialTime
+                        initialTime: data.initialTime,
+                        absoluteEndTime: data.absoluteEndTime,
+                        absoluteStartTime: data.absoluteStartTime
                     };
                 }
             } catch (error) {
@@ -66,18 +68,31 @@
             let displayTime;
             let isTimeUp = false;
             
-            if (timerData.isRunning && timerData.remainingTime > 0) {
-                const currentTime = Date.now();
-                const elapsed = Math.floor((currentTime - timerData.startTime) / 1000);
-                displayTime = Math.max(0, timerData.remainingTime - elapsed);
-                
-                if (displayTime === 0) {
-                    isTimeUp = true;
-                }
-            } else {
-                displayTime = timerData.remainingTime;
-                // 只有當初始時間大於0且當前剩餘時間為0時才算時間到
+            if (useServerAPI) {
+                // 服務器API模式：使用服務器計算好的actualRemainingTime
+                displayTime = timerData.remainingTime; // 這實際上是 actualRemainingTime
                 isTimeUp = (displayTime === 0 && timerData.initialTime > 0);
+            } else {
+                // localStorage模式：需要在客戶端計算
+                if (timerData.isRunning && timerData.remainingTime > 0) {
+                    // 優先使用絕對時間計算
+                    if (timerData.absoluteEndTime) {
+                        const currentTime = Date.now();
+                        displayTime = Math.max(0, timerData.absoluteEndTime - Math.floor(currentTime / 1000));
+                    } else {
+                        // 回退到舊邏輯
+                        const currentTime = Date.now();
+                        const elapsed = Math.floor((currentTime - timerData.startTime) / 1000);
+                        displayTime = Math.max(0, timerData.remainingTime - elapsed);
+                    }
+                    
+                    if (displayTime === 0) {
+                        isTimeUp = true;
+                    }
+                } else {
+                    displayTime = timerData.remainingTime;
+                    isTimeUp = (displayTime === 0 && timerData.initialTime > 0);
+                }
             }
             
             // Debug 資訊
