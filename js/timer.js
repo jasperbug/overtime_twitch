@@ -7,6 +7,11 @@ class TwitchOvertimeTimer {
         this.isFinished = false;
         this.twitchChat = new TwitchChatListener();
         
+        // 性能優化：快取設定值
+        this.cachedSettings = null;
+        this.settingsCacheTime = 0;
+        this.lastSyncTime = 0;
+        
         this.initializeElements();
         this.loadTimerData();
         this.bindEvents();
@@ -71,10 +76,15 @@ class TwitchOvertimeTimer {
         this.timerData = Storage.getTimerData();
     }
 
-    saveTimerData() {
+    saveTimerData(forceSync = false) {
         Storage.saveTimerData(this.timerData);
-        // 同步到服務器（解決OBS Browser Source問題）
-        this.syncToServer();
+        
+        // 性能優化：限制同步頻率，避免每秒HTTP請求
+        const now = Date.now();
+        if (forceSync || (now - this.lastSyncTime) >= 5000) { // 最多每5秒同步一次
+            this.syncToServer();
+            this.lastSyncTime = now;
+        }
     }
 
     // 同步狀態到服務器
@@ -158,7 +168,7 @@ class TwitchOvertimeTimer {
         this.timerData.isRunning = false;
         this.isFinished = false;
         
-        this.saveTimerData();
+        this.saveTimerData(true); // 強制同步重要操作
         this.updateDisplay();
         this.updateStartPauseButton();
     }
@@ -177,11 +187,16 @@ class TwitchOvertimeTimer {
     }
 
     startTimer() {
+        const currentTime = Date.now();
         this.timerData.isRunning = true;
-        this.timerData.startTime = Date.now();
+        this.timerData.startTime = currentTime;
         this.isFinished = false;
         
-        this.saveTimerData();
+        // 設定絕對結束時間（解決背景標籤節流問題）
+        this.timerData.absoluteStartTime = currentTime;
+        this.timerData.absoluteEndTime = Math.floor(currentTime / 1000) + this.timerData.remainingTime;
+        
+        this.saveTimerData(true); // 強制同步狀態變更
         this.updateStartPauseButton();
         
         this.timerInterval = setInterval(() => {
@@ -192,12 +207,18 @@ class TwitchOvertimeTimer {
     pauseTimer() {
         this.timerData.isRunning = false;
         
+        // 計算當前真實剩餘時間並保存
+        if (this.timerData.absoluteEndTime) {
+            const currentTime = Date.now();
+            this.timerData.remainingTime = Math.max(0, this.timerData.absoluteEndTime - Math.floor(currentTime / 1000));
+        }
+        
         if (this.timerInterval) {
             clearInterval(this.timerInterval);
             this.timerInterval = null;
         }
         
-        this.saveTimerData();
+        this.saveTimerData(true); // 強制同步狀態變更
         this.updateStartPauseButton();
     }
 
@@ -205,40 +226,58 @@ class TwitchOvertimeTimer {
         this.pauseTimer();
         this.timerData.remainingTime = this.timerData.initialTime || 0;
         this.timerData.startTime = 0;
+        this.timerData.absoluteStartTime = 0;
+        this.timerData.absoluteEndTime = 0;
         this.isFinished = false;
         this.lastWarningTime = -1;
         
-        this.saveTimerData();
+        this.saveTimerData(true); // 強制同步重置操作
         this.updateDisplay();
     }
 
     updateTimer() {
         const currentTime = Date.now();
-        const elapsed = Math.floor((currentTime - this.timerData.startTime) / 1000);
-        const newRemainingTime = Math.max(0, this.timerData.remainingTime - elapsed);
+        
+        // 計算真實剩餘時間（基於絕對時間，不受setInterval影響）
+        const actualElapsed = Math.floor((currentTime - this.timerData.absoluteStartTime) / 1000);
+        const actualRemainingTime = Math.max(0, this.timerData.absoluteEndTime - Math.floor(currentTime / 1000));
+        
+        // 性能優化：快取設定值，避免每秒讀取localStorage
+        if (!this.cachedSettings || (currentTime - this.settingsCacheTime) > 10000) { // 每10秒更新快取
+            this.cachedSettings = Storage.getSettings();
+            this.settingsCacheTime = currentTime;
+        }
         
         // 檢查是否需要播放警告音
-        const warningTime = Storage.getSettings().warningTime;
-        if (newRemainingTime <= warningTime && newRemainingTime > 0 && this.lastWarningTime !== newRemainingTime) {
-            if (newRemainingTime % 60 === 0) { // 每分鐘播放一次警告音
+        const warningTime = this.cachedSettings.warningTime;
+        if (actualRemainingTime <= warningTime && actualRemainingTime > 0 && this.lastWarningTime !== actualRemainingTime) {
+            if (actualRemainingTime % 60 === 0) { // 每分鐘播放一次警告音
                 this.audioManager.playWarningSound();
-                this.lastWarningTime = newRemainingTime;
+                this.lastWarningTime = actualRemainingTime;
             }
         }
         
         // 檢查是否結束
-        if (newRemainingTime === 0 && !this.isFinished) {
+        if (actualRemainingTime === 0 && !this.isFinished) {
             this.isFinished = true;
             this.timerData.isRunning = false;
             this.timerData.remainingTime = 0;
             this.pauseTimer();
             this.audioManager.playFinishedSound();
-            this.saveTimerData();
-        } else if (newRemainingTime > 0) {
-            // 更新開始時間以保持準確性
-            this.timerData.startTime = currentTime;
-            this.timerData.remainingTime = newRemainingTime;
-            this.saveTimerData();
+            this.saveTimerData(true); // 強制同步
+        } else if (actualRemainingTime > 0) {
+            // 更新計時器數據
+            this.timerData.remainingTime = actualRemainingTime;
+            
+            // 只在特定情況下才保存數據，避免每秒localStorage寫入
+            const shouldSave = (actualElapsed % 10 === 0) || // 每10秒保存一次
+                              (actualRemainingTime <= 60 && actualElapsed % 5 === 0) || // 最後1分鐘每5秒保存
+                              (actualRemainingTime <= 10); // 最後10秒每秒保存
+                              
+            if (shouldSave) {
+                this.timerData.startTime = currentTime;
+                this.saveTimerData();
+            }
         }
         
         this.updateDisplay();
@@ -258,20 +297,23 @@ class TwitchOvertimeTimer {
     addTime(seconds, points = 0) {
         if (seconds === 0) return;
         
-        // 如果計時器正在運行，需要計算當前實際剩餘時間
+        // 如果計時器正在運行，需要更新絕對結束時間
         if (this.timerData.isRunning) {
             const currentTime = Date.now();
-            const elapsed = Math.floor((currentTime - this.timerData.startTime) / 1000);
-            const currentRemaining = Math.max(0, this.timerData.remainingTime - elapsed);
             
-            this.timerData.remainingTime = Math.max(0, currentRemaining + seconds);
+            // 計算當前實際剩餘時間
+            const actualRemainingTime = Math.max(0, this.timerData.absoluteEndTime - Math.floor(currentTime / 1000));
+            
+            // 更新剩餘時間和絕對結束時間
+            this.timerData.remainingTime = Math.max(0, actualRemainingTime + seconds);
+            this.timerData.absoluteEndTime = Math.floor(currentTime / 1000) + this.timerData.remainingTime;
             this.timerData.startTime = currentTime;
         } else {
             this.timerData.remainingTime = Math.max(0, this.timerData.remainingTime + seconds);
         }
         
         this.isFinished = false;
-        this.saveTimerData();
+        this.saveTimerData(true); // 強制同步時間變更
         
         // 記錄統計
         if (points > 0) {
