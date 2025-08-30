@@ -141,8 +141,15 @@
             await checkServerAPI();
             await updateDisplay();
             
-            // 每秒更新一次
-            setInterval(updateDisplay, 1000);
+            // 同步到整秒邊界，確保與控制頁面一致
+            const now = Date.now();
+            const msUntilNextSecond = 1000 - (now % 1000);
+            
+            setTimeout(() => {
+                // 在整秒邊界啟動定時器
+                updateDisplay();
+                setInterval(updateDisplay, 1000);
+            }, msUntilNextSecond);
         }
         
         // 啟動

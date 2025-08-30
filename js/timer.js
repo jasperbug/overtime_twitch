@@ -199,9 +199,16 @@ class TwitchOvertimeTimer {
         this.saveTimerData(true); // 強制同步狀態變更
         this.updateStartPauseButton();
         
-        this.timerInterval = setInterval(() => {
+        // 同步到整秒邊界啟動定時器
+        const now = Date.now();
+        const msUntilNextSecond = 1000 - (now % 1000);
+        
+        setTimeout(() => {
             this.updateTimer();
-        }, 1000);
+            this.timerInterval = setInterval(() => {
+                this.updateTimer();
+            }, 1000);
+        }, msUntilNextSecond);
     }
 
     pauseTimer() {
