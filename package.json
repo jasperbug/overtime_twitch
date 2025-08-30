@@ -1,6 +1,6 @@
 {
   "name": "twitch-overtime-timer",
-  "version": "3.3.2",
+  "version": "3.3.3",
   "description": "專為 Twitch 實況主設計的加班時間管理工具，使用訂閱者積分系統控制直播延長時間。",
   "main": "server.js",
   "bin": "server.js",
