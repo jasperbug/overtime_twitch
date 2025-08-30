@@ -235,11 +235,12 @@ class TwitchChatListener {
             // 新訂閱或續訂
             this.handleSubscription(tags);
         } else if (msgId === 'subgift') {
-            // 單個禮物訂閱
+            // 單個禮物訂閱 - 處理每個個別的禮物訂閱
             this.handleGiftSubscription(tags);
         } else if (msgId === 'submysterygift') {
-            // 神秘禮物訂閱
-            this.handleMysteryGiftSubscription(tags);
+            // 神秘/批量禮物訂閱總結 - 忽略以避免重複計算
+            console.log('🎁✨ 收到批量禮物總結訊息，已忽略（避免與個別subgift重複計算）');
+            // 不處理此訊息，因為個別的subgift訊息已經處理過了
         }
     }
 
@@ -322,23 +323,14 @@ class TwitchChatListener {
     handleGiftSubscription(tags) {
         const subPlan = tags['msg-param-sub-plan'] || '1000';
         const points = this.subscriptionPoints[subPlan] || 1;
+        const recipient = tags['msg-param-recipient-display-name'] || '未知';
+        const gifter = tags['display-name'] || '匿名';
         
-        console.log(`🎁 偵測到禮物訂閱! Tier: ${subPlan}, 積分: ${points}`);
+        console.log(`🎁 偵測到禮物訂閱! ${gifter} → ${recipient}, Tier: ${subPlan}, 積分: ${points}`);
         
         this.addPointsToTimer(points, '禮物訂閱');
     }
 
-    // 處理神秘禮物訂閱
-    handleMysteryGiftSubscription(tags) {
-        const subPlan = tags['msg-param-sub-plan'] || '1000';
-        const giftCount = parseInt(tags['msg-param-mass-gift-count']) || 1;
-        const pointsPerGift = this.subscriptionPoints[subPlan] || 1;
-        const totalPoints = pointsPerGift * giftCount;
-        
-        console.log(`🎁✨ 偵測到神秘禮物! 數量: ${giftCount}, 總積分: ${totalPoints}`);
-        
-        this.addPointsToTimer(totalPoints, `${giftCount}個禮物訂閱`);
-    }
 
     // 添加積分到計時器
     addPointsToTimer(points, source) {
