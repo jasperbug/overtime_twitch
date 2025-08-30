@@ -5,7 +5,7 @@
 ### 方法一：使用批處理文件（推薦）
 1. **下載並解壓** `twitch-overtime-timer-v3.3.2.zip`
 2. **安裝 Node.js**：訪問 https://nodejs.org/ 下載並安裝 LTS 版本
-3. **雙擊執行** `start-windows.bat`
+3. **雙擊執行** `start.bat` (簡化版) 或 `start-windows.bat` (完整版)
 4. **自動完成**：批處理文件會自動安裝依賴並啟動服務器
 
 ### 方法二：手動安裝
