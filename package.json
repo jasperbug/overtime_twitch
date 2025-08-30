@@ -1,18 +1,39 @@
 {
   "name": "twitch-overtime-timer",
-  "version": "1.0.0",
+  "version": "3.3.2",
   "description": "專為 Twitch 實況主設計的加班時間管理工具，使用訂閱者積分系統控制直播延長時間。",
   "main": "server.js",
+  "bin": "server.js",
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js",
     "serve": "node server.js",
+    "build": "pkg . --out-path ./dist",
+    "build:win": "pkg . --targets node18-win-x64 --out-path ./dist",
+    "build:all": "pkg . --targets node18-win-x64,node18-macos-x64,node18-linux-x64 --out-path ./dist",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": ["twitch", "timer", "streaming", "obs", "countdown"],
+  "keywords": [
+    "twitch",
+    "timer",
+    "streaming",
+    "obs",
+    "countdown"
+  ],
   "author": "jaspertsai",
   "license": "ISC",
   "dependencies": {
     "express": "^5.1.0"
+  },
+  "devDependencies": {
+    "pkg": "^5.8.1"
+  },
+  "pkg": {
+    "assets": [
+      "css/**/*",
+      "js/**/*",
+      "*.html"
+    ],
+    "outputPath": "./dist"
   }
 }
