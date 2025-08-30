@@ -332,9 +332,16 @@ class TwitchOvertimeTimer {
         let displayTime;
         
         if (this.timerData.isRunning && this.timerData.remainingTime > 0) {
-            const currentTime = Date.now();
-            const elapsed = Math.floor((currentTime - this.timerData.startTime) / 1000);
-            displayTime = Math.max(0, this.timerData.remainingTime - elapsed);
+            // 使用絕對時間計算，與updateTimer保持一致
+            if (this.timerData.absoluteEndTime) {
+                const currentTime = Date.now();
+                displayTime = Math.max(0, this.timerData.absoluteEndTime - Math.floor(currentTime / 1000));
+            } else {
+                // 回退到舊邏輯（向後兼容）
+                const currentTime = Date.now();
+                const elapsed = Math.floor((currentTime - this.timerData.startTime) / 1000);
+                displayTime = Math.max(0, this.timerData.remainingTime - elapsed);
+            }
         } else {
             displayTime = this.timerData.remainingTime;
         }
